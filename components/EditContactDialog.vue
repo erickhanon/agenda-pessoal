@@ -1,10 +1,11 @@
 <template>
-  <v-dialog :model-value="dialog" @update:model-value="updateDialog" max-width="600px">
+  <v-dialog max-width="600px" v-model="dialog">
+  <template v-slot:default="{ isActive }">
     <v-card>
       <v-card-title>
-        <span>{{ isEditMode ? 'Editar Contato' : 'Adicionar Contato' }}</span>
+        <span>Editar Contato</span>
         <v-spacer></v-spacer>
-        <v-btn icon @click="updateDialog(false)">
+        <v-btn icon @click="isActive.value = false">
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
@@ -13,7 +14,7 @@
           <v-row>
             <v-col cols="12" class="text-center">
               <v-avatar size="100">
-                <v-img :src="contactImageUrl!" height="100px"></v-img>
+                <v-img :src="contact.contactImageUrl!" lazy-src="../assets/images/placeholder.png" height="120px"></v-img>
               </v-avatar>
             </v-col>
             <v-col cols="12" class="text-center">
@@ -50,49 +51,46 @@
       </v-card-text>
       <v-card-actions>
         <v-btn color="primary" @click="saveContact">Salvar</v-btn>
-        <v-btn @click="updateDialog(false)">Cancelar</v-btn>
+        <v-btn @click="isActive.value = false">Cancelar</v-btn>
       </v-card-actions>
     </v-card>
+  </template>
   </v-dialog>
 </template>
 
 <script lang="ts" setup>
-import type { Contato } from '@/assets/types/user'
+import type { ContatoComImagem } from '@/assets/types/user'
 
 const props = defineProps<{
-  dialog: boolean,
-  isEditMode: boolean,
-  contact: Contato
+  contact: ContatoComImagem
 }>()
 
-const emit = defineEmits(['update:dialog', 'save'])
-const contact = ref({ ...props.contact })
+const { loadAuthInfo } = useAuth()
 
-const contactImageUrl = ref<string | null>(null)
-
-const token = localStorage.getItem('token') || ''
-const { getPhoto } = usePhotoService(token)
-
-onMounted(async () => {
-  contactImageUrl.value = await getPhoto(String(contact.value.id))
-})
-
-watch(() => props.dialog, (newVal) => {
-  if (newVal) {
-    contact.value = { ...props.contact }
-    onMounted(async () => {
-      contactImageUrl.value = await getPhoto(contact.value.pessoa.foto.id)
-    })
-  }
-})
+if (typeof window !== 'undefined') {
+  loadAuthInfo()
+  
+}
+const emit = defineEmits(['update:dialog', 'save:contact'])
+const contact = ref<ContatoComImagem>({} as ContatoComImagem);
+const dialog = ref<boolean>(false)
 
 const saveContact = () => {
-  emit('save', contact.value)
+  console.log('ENTROU NO EMIT', contact.value)
+  emit('save:contact', contact.value)
   emit('update:dialog', false)
 }
 
 const updateDialog = (value: boolean) => {
   emit('update:dialog', value)
 }
+
+const populateModal = (prop: ContatoComImagem) => {
+  contact.value = prop
+}
+
+onUpdated(() => {
+  populateModal(props.contact)
+})
 
 </script>

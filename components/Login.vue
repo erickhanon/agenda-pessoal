@@ -12,7 +12,7 @@
               <v-text-field variant="outlined" v-model="password" label="Senha" type="password" required></v-text-field>
               <v-checkbox v-model="remember" label="Lembrar credenciais"></v-checkbox>
               <v-card-actions>
-                <v-btn type="submit" variant="flat" style="width: 100%;" color="primary">Entrar</v-btn>
+                <v-btn type="submit" variant="flat" color="primary">Entrar</v-btn>
               </v-card-actions>
             </v-form>
           </v-card-text>
@@ -23,13 +23,11 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
-import { useRouter } from 'nuxt/app'
-
 const username = ref('')
 const password = ref('')
 const remember = ref(false)
 const router = useRouter()
+const { setAuthInfo } = useAuth()
 
 const login = async () => {
   try {
@@ -44,9 +42,14 @@ const login = async () => {
     if (!response.ok) throw new Error('Login failed')
 
     const data = await response.json()
-    localStorage.setItem('token', data.accessToken)
-    localStorage.setItem('userRole', data.tipos[0])
-    localStorage.setItem('userId', data.id)
+    setAuthInfo({
+      id: data.id,
+      username: data.username,
+      tipos: data.tipos,
+      accessToken: data.accessToken,
+      tokenType: data.tokenType
+    })
+
     router.push('/dashboard')
   } catch (error) {
     alert('Falha no login: ' + (error as Error).message)

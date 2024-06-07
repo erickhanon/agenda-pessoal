@@ -4,11 +4,11 @@
       <v-col cols="12">
         <h2>Favoritos</h2>
         <v-row>
-          <FavoriteCard 
-            v-for="contact in favoriteContacts" 
-            :key="contact.id" 
-            :contact="contact" 
-            @click="openEditDialog(contact)" 
+          <FavoriteCard
+            v-for="contact in favoriteContacts"
+            :key="contact.id"
+            :contact="contact"
+            @click="openEditDialog(contact)"
           />
         </v-row>
       </v-col>
@@ -18,106 +18,154 @@
         <v-text-field
           v-model="search"
           label="Pesquisar Contatos"
-          @input="fetchContacts"
+          @input="searchContact"
         ></v-text-field>
       </v-col>
     </v-row>
     <v-row>
       <v-col cols="12">
-        <ContactTable 
-          :contacts="contacts"
-          @edit="openEditDialog"
-          @delete="deleteContact"
-        />
+        <ContactTable :contacts="contacts" @edit="openEditDialog" />
       </v-col>
     </v-row>
-
-    <EditContactDialog
-      :dialog="dialog"
-      :isEditMode="editMode"
-      :contact="currentContact"
-      @update:dialog="dialog = $event"
-      @save="saveContact"
-    />
   </v-container>
+  <EditContactDialog
+    v-model="dialog"
+    :contact="currentContact"
+    @edit="openEditDialog(currentContact)"
+    @save:contact="saveContact(currentContact)"
+  />
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
-import EditContactDialog from '@/components/EditContactDialog.vue'
-import FavoriteCard from '@/components/FavoriteCard.vue'
-import ContactTable from '@/components/ContactTable.vue'
-import type { Contato } from '@/assets/types/user'
-import { usePhotoService } from '@/composables/usePhotoService'
+import type {
+  Contato,
+  ContatoComImagem,
+  Pessoa,
+  Usuario,
+} from "@/assets/types/user";
+import { usePhotoService } from "@/composables/usePhotoService";
 
-const apiUrl = 'https://demometaway.vps-kinghost.net:8485'
+const apiUrl = "https://demometaway.vps-kinghost.net:8485";
+const search = ref<string>("");
+const { loadAuthInfo, token, userId } = useAuth();
 
-const search = ref<string>('')
-const contacts = ref<Contato[]>([])
-const favoriteContacts = ref<Contato[]>([])
-const dialog = ref<boolean>(false)
-const editMode = ref<boolean>(false)
-const currentContact = ref<Contato>({
-  pessoa: { id: 0, nome: '', cpf: '', endereco: { id: 0, logradouro: '', numero: 0, cep: '', bairro: '', cidade: '', estado: '', pais: '' }, foto: { id: '', name: '', type: '' } },
-  tag: '',
-  email: '',
-  telefone: '',
-  tipoContato: '',
+const contacts = ref<ContatoComImagem[]>([]);
+const favoriteContacts = ref<ContatoComImagem[]>([]);
+const dialog = ref<boolean>(false);
+const currentContact = ref<ContatoComImagem>({
+  pessoa: {} as Pessoa,
+  tag: "",
+  email: "",
+  telefone: "",
+  tipoContato: "",
   privado: false,
-  usuario: { id: 0, nome: '', dataNascimento: '', cpf: '', email: '', telefone: '', username: '', password: '' },
-})
+  usuario: {} as Usuario,
+  contactImageUrl: "",
+});
 
-const token = localStorage.getItem('token') || ''
-const { getPhoto } = usePhotoService(token)
-const contactImageUrl = ref<string | null>(null)
+const openEditDialog = (contact: ContatoComImagem) => {
+  currentContact.value = contact;
+  console.log("currentContact", currentContact.value.email);
+  dialog.value = true;
+};
 
 const fetchContacts = async () => {
-  const userId = localStorage.getItem('userId')
-  const response = await fetch(`${apiUrl}/api/contato/listar/${userId}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  })
-  const data = await response.json()
-  contacts.value = await Promise.all(data.map(async (contact: Contato) => {
-  if (contact.id !== undefined) {
-    contactImageUrl.value = await getPhoto(contact.id.toString())
+  if (!token.value || !userId.value) {
+    return;
   }
-    return contact
-  }))
-  favoriteContacts.value = contacts.value.slice(0, 6) // Mostra apenas os primeiros 6 contatos como favoritos
-}
 
-const openEditDialog = (contact: Contato) => {
-  editMode.value = true
-  currentContact.value = { ...contact }
-  dialog.value = true
-}
+  const response = await fetch(`${apiUrl}/api/contato/listar/${userId.value}`, {
+    headers: {
+      Authorization: `Bearer ${token.value}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Erro ao buscar contatos");
+  }
+
+  const data = await response.json();
+  const { getPhoto } = usePhotoService(token.value);
+
+  const contactsWithImages = await Promise.all(
+    data.map(async (contact: ContatoComImagem) => {
+      const imageUrl = await getPhoto(contact.id ?? 1);
+      contact.contactImageUrl =
+        imageUrl !== null ? imageUrl : "../assets/images/placeholder.png";
+      return contact;
+    })
+  );
+
+  contacts.value = contactsWithImages;
+  console.log("contacts", contacts.value);
+  favoriteContacts.value = contactsWithImages.slice(0, 6);
+};
 
 const saveContact = async (contact: Contato) => {
-  const method = editMode.value ? 'PUT' : 'POST'
-  const url = editMode.value ? `${apiUrl}/api/contato/${contact.id}` : `${apiUrl}/api/contato`
-  await fetch(url, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('token')}`
-    },
-    body: JSON.stringify(contact),
-  })
-  dialog.value = false
-  fetchContacts()
-}
+  console.log("entrou na função de salvar", contact);
+  if (!token.value || !userId.value) {
+    return;
+  }
 
-const deleteContact = async (id: number) => {
-  await fetch(`${apiUrl}/api/contato/${id}`, {
-    method: 'DELETE',
+  const response = await fetch(`${apiUrl}/api/contato/salvar`, {
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('token')}`
+      Authorization: `Bearer ${token.value}`,
+      "Content-Type": "application/json",
     },
-  })
-  fetchContacts()
-}
+    body: JSON.stringify({
+      ...contact,
+      usuario: { id: userId.value },
+    }),
+  });
 
-onMounted(fetchContacts)
+  if (!response.ok) {
+    throw new Error("Erro ao salvar contato");
+  }
+
+  dialog.value = false;
+  fetchContacts();
+};
+
+// post /api/contato/pesquisar
+const searchContact = async () => {
+  if (!token.value || !userId.value) {
+    return;
+  }
+
+  const response = await fetch(`${apiUrl}/api/contato/pesquisar`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token.value}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      termo: search.value
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Erro ao buscar contatos");
+  }
+
+  const data = await response.json();
+  const { getPhoto } = usePhotoService(token.value);
+
+  const contactsWithImages = await Promise.all(
+    data.map(async (contact: ContatoComImagem) => {
+      const imageUrl = await getPhoto(contact.id ?? 1);
+      contact.contactImageUrl =
+        imageUrl !== null ? imageUrl : "../assets/images/placeholder.png";
+      return contact;
+    })
+  );
+
+  contacts.value = contactsWithImages;
+  console.log("contacts", contacts.value);
+};
+
+onMounted(fetchContacts);
+if (typeof window !== "undefined") {
+  loadAuthInfo();
+}
 </script>

@@ -21,9 +21,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, defineProps, onMounted } from 'vue'
 import type { Contato } from '@/assets/types/user'
-import { usePhotoService } from '@/composables/usePhotoService'
 
 const props = defineProps<{
   contact: Contato

@@ -1,7 +1,7 @@
 export function usePhotoService(token: string) {
-  const getPhoto = async (photoId: string): Promise<string | null> => {
+  const getPhoto = async (contactId: number): Promise<string | null> => {
     try {
-      const response = await fetch(`https://demometaway.vps-kinghost.net:8485/api/foto/download/${photoId}`, {
+      const response = await fetch(`https://demometaway.vps-kinghost.net:8485/api/foto/download/${contactId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

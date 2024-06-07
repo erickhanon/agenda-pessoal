@@ -9,6 +9,11 @@ export interface Contato {
   usuario: Usuario;
 }
 
+//contactsWithImages implements Contato contactImageUrl
+export interface ContatoComImagem extends Contato {
+  contactImageUrl?: string;
+}
+
 export interface Usuario {
   id: number;
   nome: string;
