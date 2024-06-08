@@ -55,7 +55,11 @@
     @delete="deleteContact(currentContact.id)"
     @save:contact="saveContact(currentContact)"
   />
-  <NewContactDialog v-model="newContactDialog" />
+  <NewContactDialog
+    v-model="newContactDialog"
+    @success="showSnackbar('Contato Criado com Sucesso!', 'success')"
+    @error="showSnackbar('Erro ao Criar o Contato.', 'error')"
+  />
   <v-snackbar v-model="snackbarVisible" :color="snackbarColor" location="top">
     {{ snackbarMessage }}
   </v-snackbar>
@@ -88,6 +92,8 @@ const snackbarMessage = ref("");
 const snackbarColor = ref("");
 
 const showSnackbar = (message: string, type: "success" | "error" = "success") => {
+  dialog.value = false;
+  newContactDialog.value = false;
   snackbarMessage.value = message;
   snackbarColor.value = type === "success" ? "green" : "red";
   snackbarVisible.value = true;

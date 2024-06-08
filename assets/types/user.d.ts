@@ -1,3 +1,5 @@
+
+declare module 'vue-the-mask';
 export interface Contato {
   id?: number;
   pessoa: Pessoa;
@@ -9,7 +11,6 @@ export interface Contato {
   usuario: Usuario;
 }
 
-//contactsWithImages implements Contato contactImageUrl
 export interface ContatoComImagem extends Contato {
   contactImageUrl?: string;
 }

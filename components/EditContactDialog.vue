@@ -2,7 +2,7 @@
   <v-dialog max-width="600px" v-model="dialog">
     <template v-slot:default="{ isActive }">
       <v-card>
-        <v-card-title>
+        <v-card-title class="my-2">
           <span>Editar Contato</span>
         </v-card-title>
         <v-card-text>
@@ -18,31 +18,44 @@
                 </v-avatar>
               </v-col>
               <v-col cols="12" class="text-center">
-                <h3>{{ contact.pessoa.nome }}</h3>
+                <h2>{{ contact.pessoa.nome }}</h2>
               </v-col>
             </v-row>
             <v-row>
               <v-col cols="12" md="6">
                 <v-text-field
+                  variant="outlined"
                   v-model="contact.email"
                   label="Email"
+                  :rules="[rules.required, rules.email]"
                   required
                 ></v-text-field>
               </v-col>
               <v-col cols="12" md="6">
                 <v-text-field
+                  :rules="[rules.required, rules.telefone]"
+                  variant="outlined"
                   v-model="contact.telefone"
                   label="Telefone"
+                  v-mask="'(##) #####-####'"
                   required
                 ></v-text-field>
               </v-col>
             </v-row>
             <v-row>
               <v-col cols="12" md="6">
-                <v-text-field v-model="contact.tag" label="Tag" required></v-text-field>
+                <v-text-field
+                  :rules="[rules.required]"
+                  variant="outlined"
+                  v-model="contact.tag"
+                  label="Tag"
+                  required
+                ></v-text-field>
               </v-col>
               <v-col cols="12" md="6">
                 <v-select
+                  :rules="[rules.required]"
+                  variant="outlined"
                   v-model="contact.tipoContato"
                   :items="['EMAIL', 'TELEFONE']"
                   label="Tipo de Contato"
@@ -52,15 +65,18 @@
             </v-row>
             <v-row>
               <v-col cols="6">
-                <v-checkbox v-model="contact.privado" label="Privado"></v-checkbox>
-              </v-col>
-              <v-col cols="12">
                 <v-file-input
+                  variant="outlined"
+                  append-inner-icon="mdi-paperclip-plus"
+                  prepend-icon=""
                   v-model="contactImage"
                   label="Foto"
                   accept="image/*"
                   @change="uploadImage"
                 ></v-file-input>
+              </v-col>
+              <v-col cols="6">
+                <v-checkbox v-model="contact.privado" label="Privado"></v-checkbox>
               </v-col>
             </v-row>
           </v-container>
@@ -76,7 +92,6 @@
 
 <script lang="ts" setup>
 import type { ContatoComImagem } from "@/assets/types/user";
-
 const props = defineProps<{
   contact: ContatoComImagem;
 }>();
@@ -90,6 +105,13 @@ const emit = defineEmits(["update:dialog", "save:contact"]);
 const contact = ref<ContatoComImagem>({} as ContatoComImagem);
 const dialog = ref<boolean>(false);
 const contactImage = ref<File | null>(null);
+const rules = {
+  required: (value: string) => !!value || "Campo obrigatório",
+  email: (value: string) => /.+@.+\..+/.test(value) || "E-mail inválido",
+  telefone: (value: string) =>
+    /^\(\d{2}\)\s\d{4,5}-\d{4}$/.test(value) || "Telefone inválido",
+  integer: (value: string) => Number.isInteger(Number(value)) || "Número inválido",
+};
 
 const saveContact = () => {
   emit("save:contact", contact.value);
