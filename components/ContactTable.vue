@@ -36,7 +36,7 @@
           variant="flat"
           size="small"
           class="mx-1"
-          @click="deleteContact(item.id!)"
+          @click="openDeleteDialog(item)"
         >
           <v-icon>mdi-delete</v-icon>
         </v-btn>
@@ -54,6 +54,18 @@
       <template #bottom />
     </v-data-table>
   </v-skeleton-loader>
+  <v-dialog v-model="dialogDelete" max-width="290">
+    <v-card>
+      <v-card-title class="headline">Deletar contato</v-card-title>
+      <v-card-text> Tem certeza que deseja deletar o contato? </v-card-text>
+      <v-card-actions>
+        <v-btn color="error" variant="text" @click="deleteContact(currentContact.id!)">
+          Deletar
+        </v-btn>
+        <v-btn variant="text" @click="dialogDelete = false">Cancelar</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script lang="ts" setup>
@@ -86,6 +98,7 @@ const currentContact = ref<ContatoComImagem>({
 });
 
 const contactImageUrl = ref<string | null>(null);
+const dialogDelete = ref<boolean>(false);
 const headers = [
   { title: "Foto", value: "contactImageUrl" },
   { title: "Nome", value: "pessoa.nome" },
@@ -111,6 +124,11 @@ const openEditDialog = (item: ContatoComImagem) => {
   emit("edit", currentContact.value);
 };
 
+const openDeleteDialog = (item: ContatoComImagem) => {
+  currentContact.value = item;
+  dialogDelete.value = true;
+};
+
 const deleteContact = async (id: number) => {
   const response = await fetch(`${apiUrl}/api/contato/remover/${id}`, {
     method: "DELETE",
@@ -120,8 +138,10 @@ const deleteContact = async (id: number) => {
   });
 
   if (!response.ok) {
+    dialogDelete.value = false;
     throw new Error("Erro ao deletar contato");
   }
+  dialogDelete.value = false;
 };
 
 const saveContact = async (contact: Contato) => {

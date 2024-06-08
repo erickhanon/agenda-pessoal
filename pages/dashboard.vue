@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <v-row>
-      <v-col cols="12">
+      <v-col cols="12" class="ma-2">
         <h2>Favoritos</h2>
         <v-row>
           <FavoriteCard
@@ -44,7 +44,7 @@
     </v-row>
     <v-row>
       <v-col cols="12">
-        <ContactTable :contacts="contacts" @edit="openEditDialog" />
+        <ContactTable :contacts="contacts" @edit="openEditDialog" @delete="" />
       </v-col>
     </v-row>
   </v-container>
@@ -56,6 +56,9 @@
     @save:contact="saveContact(currentContact)"
   />
   <NewContactDialog v-model="newContactDialog" />
+  <v-snackbar v-model="snackbarVisible" :color="snackbarColor" location="top">
+    {{ snackbarMessage }}
+  </v-snackbar>
 </template>
 
 <script lang="ts" setup>
@@ -80,6 +83,18 @@ const currentContact = ref<ContatoComImagem>({
   usuario: {} as Usuario,
   contactImageUrl: "",
 });
+const snackbarVisible = ref(false);
+const snackbarMessage = ref("");
+const snackbarColor = ref("");
+
+const showSnackbar = (message: string, type: "success" | "error" = "success") => {
+  snackbarMessage.value = message;
+  snackbarColor.value = type === "success" ? "green" : "red";
+  snackbarVisible.value = true;
+  setTimeout(() => {
+    snackbarVisible.value = false;
+  }, 3000);
+};
 
 const openEditDialog = (contact: ContatoComImagem) => {
   currentContact.value = contact;
@@ -103,6 +118,7 @@ const fetchContacts = async () => {
   });
 
   if (!response.ok) {
+    showSnackbar("Erro ao buscar contatos", "error");
     throw new Error("Erro ao buscar contatos");
   }
 
@@ -119,7 +135,7 @@ const fetchContacts = async () => {
   );
 
   contacts.value = contactsWithImages;
-  console.log("contacts", contacts.value);
+  showSnackbar("Contatos atualizados com sucesso");
   favoriteContacts.value = contactsWithImages.slice(0, 6);
 };
 
@@ -142,10 +158,12 @@ const saveContact = async (contact: Contato) => {
   });
 
   if (!response.ok) {
+    showSnackbar("Erro ao salvar contato", "error");
     throw new Error("Erro ao salvar contato");
   }
 
   dialog.value = false;
+  showSnackbar("Contato salvo com sucesso");
   fetchContacts();
 };
 
@@ -166,6 +184,7 @@ const searchContact = async () => {
   });
 
   if (!response.ok) {
+    showSnackbar("Erro ao buscar contatos", "error");
     throw new Error("Erro ao buscar contatos");
   }
 
@@ -182,7 +201,7 @@ const searchContact = async () => {
   );
 
   contacts.value = contactsWithImages;
-  console.log("contacts", contacts.value);
+  showSnackbar("Pesquisa realizada com sucesso");
 };
 
 const deleteContact = async (id: number | undefined) => {
@@ -198,10 +217,12 @@ const deleteContact = async (id: number | undefined) => {
   });
 
   if (!response.ok) {
+    showSnackbar("Erro ao deletar contato", "error");
     throw new Error("Erro ao deletar contato");
   }
 
   dialog.value = false;
+  showSnackbar("Contato deletado com sucesso");
   fetchContacts();
 };
 
