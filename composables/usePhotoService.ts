@@ -1,7 +1,8 @@
 export function usePhotoService(token: string) {
+  const apiUrl = "https://demometaway.vps-kinghost.net:8485";
   const getPhoto = async (contactId: number): Promise<string | null> => {
     try {
-      const response = await fetch(`https://demometaway.vps-kinghost.net:8485/api/foto/download/${contactId}`, {
+      const response = await fetch(`${apiUrl}/api/foto/download/${contactId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -18,7 +19,20 @@ export function usePhotoService(token: string) {
     }
   }
 
+  const uploadPhoto = async (contactId: number, formData: FormData) => {
+    const response = await fetch(`${apiUrl}/api/foto/upload/${contactId}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    return response;
+  };
+
   return {
-    getPhoto
-  }
+    uploadPhoto, getPhoto
+  };
+  
 }

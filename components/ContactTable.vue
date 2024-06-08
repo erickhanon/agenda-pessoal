@@ -1,11 +1,16 @@
 <template>
-  <v-skeleton-loader type="avatar" :loading="loading" :height="350">
+  <v-skeleton-loader type="table-tbody" :loading="loading" :height="350">
     <v-data-table
+      :mobile="null"
       :headers="headers"
       :items="contacts"
+      mobile-breakpoint="sm"
       item-value="id"
       class="elevation-1"
+      density="compact"
       hover
+      :hide-default-header="isMobile"
+      items-per-page="-1"
     >
       <template #item.contactImageUrl="{ item }">
         <v-avatar size="80" class="mx-auto my-2">
@@ -17,10 +22,22 @@
         </v-avatar>
       </template>
       <template #item.actions="{ item }">
-        <v-btn icon @click="openEditDialog(item)">
+        <v-btn
+          icon
+          variant="flat"
+          size="small"
+          class="mx-1"
+          @click="openEditDialog(item)"
+        >
           <v-icon>mdi-pencil</v-icon>
         </v-btn>
-        <v-btn icon @click="deleteContact(item.id!)">
+        <v-btn
+          icon
+          variant="flat"
+          size="small"
+          class="mx-1"
+          @click="deleteContact(item.id!)"
+        >
           <v-icon>mdi-delete</v-icon>
         </v-btn>
         <EditContactDialog
@@ -30,25 +47,22 @@
         />
       </template>
       <template #no-data>
-        <v-alert :value="true" color="error" icon="mdi-alert">
+        <v-alert :value="true" color="warning" icon="mdi-alert">
           Nenhum contato encontrado
         </v-alert>
       </template>
+      <template #bottom />
     </v-data-table>
   </v-skeleton-loader>
 </template>
 
 <script lang="ts" setup>
-import type {
-  Contato,
-  ContatoComImagem,
-  Pessoa,
-  Usuario,
-} from "@/assets/types/user";
+import type { Contato, ContatoComImagem, Pessoa, Usuario } from "@/assets/types/user";
 import { usePhotoService } from "@/composables/usePhotoService";
 
-const emit = defineEmits(["edit"]);
+const emit = defineEmits(["edit", "delete"]);
 const loading = ref<boolean>(true);
+const apiUrl = "https://demometaway.vps-kinghost.net:8485";
 
 const { loadAuthInfo, token } = useAuth();
 
@@ -97,14 +111,38 @@ const openEditDialog = (item: ContatoComImagem) => {
   emit("edit", currentContact.value);
 };
 
-const deleteContact = (id: number | undefined) => {
-  const emit = defineEmits(["delete"]);
-  emit("delete", id ?? 0);
+const deleteContact = async (id: number) => {
+  const response = await fetch(`${apiUrl}/api/contato/remover/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token.value}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Erro ao deletar contato");
+  }
 };
 
 const saveContact = async (contact: Contato) => {
   const emit = defineEmits(["save:contact"]);
   emit("save:contact", contact);
 };
-onMounted(fetchContactImages);
+const isMobile = ref(false);
+
+const updateIsMobile = () => {
+  isMobile.value = window.innerWidth < 600;
+};
+
+onMounted(() => {
+  fetchContactImages();
+  updateIsMobile();
+  window.addEventListener("resize", updateIsMobile);
+});
+
+watchEffect(() => {
+  if (typeof window !== "undefined") {
+    updateIsMobile();
+  }
+});
 </script>

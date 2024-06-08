@@ -12,14 +12,34 @@
           />
         </v-row>
       </v-col>
+      <v-divider class="my-4"></v-divider>
     </v-row>
     <v-row>
-      <v-col cols="12">
+      <v-col cols="6" lg="10">
         <v-text-field
           v-model="search"
           label="Pesquisar Contatos"
           @input="searchContact"
+          variant="outlined"
+          clearable
         ></v-text-field>
+      </v-col>
+      <v-col>
+        <v-btn
+          size="large"
+          class="d-block mx-auto"
+          @click="openNewContactDialog"
+          color="primary"
+          rounded="xl"
+          icon
+        >
+          <v-icon>mdi-plus</v-icon>
+        </v-btn>
+      </v-col>
+      <v-col>
+        <v-btn size="large" @click="fetchContacts" color="secondary" rounded="xl" icon>
+          <v-icon>mdi-refresh</v-icon>
+        </v-btn>
       </v-col>
     </v-row>
     <v-row>
@@ -32,17 +52,14 @@
     v-model="dialog"
     :contact="currentContact"
     @edit="openEditDialog(currentContact)"
+    @delete="deleteContact(currentContact.id)"
     @save:contact="saveContact(currentContact)"
   />
+  <NewContactDialog v-model="newContactDialog" />
 </template>
 
 <script lang="ts" setup>
-import type {
-  Contato,
-  ContatoComImagem,
-  Pessoa,
-  Usuario,
-} from "@/assets/types/user";
+import type { Contato, ContatoComImagem, Pessoa, Usuario } from "@/assets/types/user";
 import { usePhotoService } from "@/composables/usePhotoService";
 
 const apiUrl = "https://demometaway.vps-kinghost.net:8485";
@@ -52,6 +69,7 @@ const { loadAuthInfo, token, userId } = useAuth();
 const contacts = ref<ContatoComImagem[]>([]);
 const favoriteContacts = ref<ContatoComImagem[]>([]);
 const dialog = ref<boolean>(false);
+const newContactDialog = ref<boolean>(false);
 const currentContact = ref<ContatoComImagem>({
   pessoa: {} as Pessoa,
   tag: "",
@@ -67,6 +85,10 @@ const openEditDialog = (contact: ContatoComImagem) => {
   currentContact.value = contact;
   console.log("currentContact", currentContact.value.email);
   dialog.value = true;
+};
+
+const openNewContactDialog = () => {
+  newContactDialog.value = true;
 };
 
 const fetchContacts = async () => {
@@ -127,7 +149,6 @@ const saveContact = async (contact: Contato) => {
   fetchContacts();
 };
 
-// post /api/contato/pesquisar
 const searchContact = async () => {
   if (!token.value || !userId.value) {
     return;
@@ -140,7 +161,7 @@ const searchContact = async () => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      termo: search.value
+      termo: search.value,
     }),
   });
 
@@ -162,6 +183,26 @@ const searchContact = async () => {
 
   contacts.value = contactsWithImages;
   console.log("contacts", contacts.value);
+};
+
+const deleteContact = async (id: number | undefined) => {
+  if (!token.value || !userId.value) {
+    return;
+  }
+
+  const response = await fetch(`${apiUrl}/api/contato/remover/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token.value}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Erro ao deletar contato");
+  }
+
+  dialog.value = false;
+  fetchContacts();
 };
 
 onMounted(fetchContacts);
