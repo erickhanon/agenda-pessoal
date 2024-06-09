@@ -68,7 +68,7 @@ const login = async () => {
       tokenType: data.tokenType,
     });
 
-    router.push("/dashboard");
+    await router.push("/dashboard");
   } catch (error) {
     alert("Falha no login: " + (error as Error).message);
   }

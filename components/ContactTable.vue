@@ -10,7 +10,7 @@
       density="compact"
       hover
       :hide-default-header="isMobile"
-      items-per-page="-1"
+      :items-per-page="-1"
     >
       <template #item.contactImageUrl="{ item }">
         <v-avatar size="80" class="mx-auto my-2">

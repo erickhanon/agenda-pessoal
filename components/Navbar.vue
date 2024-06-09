@@ -70,18 +70,23 @@ const isDarkTheme = computed(() => theme.global.current.value.dark);
 
 const menuItems = [
   { title: "Home", icon: "mdi-home", to: "/dashboard" },
-  { title: "Meu Cadastro", icon: "mdi-account", to: "/meu-cadastro" },
   { title: "Pessoas", icon: "mdi-account-group", to: "/pessoas" },
-  { title: "Contatos", icon: "mdi-book", to: "/" },
   { title: "Usuários", icon: "mdi-account-multiple", to: "/usuarios", adminOnly: true },
+  { title: "Meu Cadastro", icon: "mdi-account-circle", to: "/cadastro" },
   { title: "Alterar Tema", icon: "mdi-brightness-4", action: "toggleTheme" },
   { title: "Logout", icon: "mdi-logout", action: "logout" },
 ];
 
+const authInfo = computed(() => {
+  if (typeof window !== "undefined") {
+    const authInfoStr = localStorage.getItem("authInfo");
+    return authInfoStr ? JSON.parse(authInfoStr) : null;
+  }
+  return null;
+});
+
 const isAdmin = computed(() => {
-  const userRole =
-    typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
-  return userRole === "ROLE_ADMIN";
+  return authInfo.value && authInfo.value.tipos.includes("ROLE_ADMIN");
 });
 
 function toggleTheme() {
@@ -106,7 +111,7 @@ function handleAction(item: MenuItem): void {
 function logout() {
   if (typeof window !== "undefined") {
     localStorage.removeItem("token");
-    localStorage.removeItem("userRole");
+    localStorage.removeItem("authInfo");
     window.location.href = "/";
   }
 }

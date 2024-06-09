@@ -212,6 +212,7 @@ const searchContact = async () => {
 
 const deleteContact = async (id: number | undefined) => {
   if (!token.value || !userId.value) {
+    fetchContacts();
     return;
   }
 

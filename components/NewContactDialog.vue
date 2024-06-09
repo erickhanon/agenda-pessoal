@@ -3,7 +3,7 @@
     <v-card>
       <v-card-title>Criar Novo Contato</v-card-title>
       <v-card-text>
-        <v-form ref="form" v-model="valid" @submit.prevent="saveContact">
+        <v-form ref="form" v-model="valid" @submit.prevent="submitForm">
           <v-row>
             <v-col cols="12" sm="4">
               <v-text-field
@@ -54,8 +54,7 @@
             </v-col>
             <v-col cols="12" sm="4">
               <v-text-field
-                :rules="[rules.required, rules.telefone]"
-                v-mask="'(##) #####-####'"
+                :rules="[rules.required]"
                 variant="outlined"
                 v-model="contact.pessoa.endereco.numero"
                 label="Número"
@@ -127,7 +126,10 @@
               ></v-select>
             </v-col>
             <v-col>
-              <v-checkbox v-model="contact.privado" label="Privado"></v-checkbox>
+              <v-checkbox v-model="contact.privado" label="Privado" />
+            </v-col>
+            <v-col>
+              <v-checkbox v-model="favorito" label="Favorito" />
             </v-col>
           </v-row>
           <v-row justify="end">
@@ -176,6 +178,7 @@ const contact = ref({
   },
 });
 const valid = ref(false);
+const favorito = ref(false);
 const loading = ref(false);
 const rules = {
   required: (value: string) => !!value || "Campo obrigatório",
@@ -208,6 +211,15 @@ const fetchUserInfo = async () => {
 
   const userInfo = await response.json();
   contact.value.usuario = userInfo;
+};
+
+const submitForm = async () => {
+  if (!valid.value) {
+    console.log("valid vlaue", valid.value);
+    return;
+  }
+
+  await saveContact();
 };
 
 const saveContact = async () => {
