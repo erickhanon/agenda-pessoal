@@ -32,7 +32,7 @@ export interface Pessoa {
   nome: string;
   cpf: string;
   endereco: Endereco;
-  foto: Foto;
+  foto?: Foto;
 }
 
 export interface Foto {

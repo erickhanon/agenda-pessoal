@@ -66,7 +66,7 @@
         />
       </template>
       <template #no-data>
-        <v-alert :value="true" color="warning" icon="mdi-alert">
+        <v-alert v-if="loading" color="warning" icon="mdi-alert">
           Nenhum contato encontrado
         </v-alert>
       </template>

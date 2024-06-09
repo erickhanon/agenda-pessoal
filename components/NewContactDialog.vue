@@ -128,9 +128,6 @@
             <v-col>
               <v-checkbox v-model="contact.privado" label="Privado" />
             </v-col>
-            <v-col>
-              <v-checkbox v-model="favorito" label="Favorito" />
-            </v-col>
           </v-row>
           <v-row justify="end">
             <v-col cols="auto">
@@ -178,7 +175,6 @@ const contact = ref({
   },
 });
 const valid = ref(false);
-const favorito = ref(false);
 const loading = ref(false);
 const rules = {
   required: (value: string) => !!value || "Campo obrigatório",
