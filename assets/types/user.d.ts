@@ -13,6 +13,7 @@ export interface Contato {
 
 export interface ContatoComImagem extends Contato {
   contactImageUrl?: string;
+  isFavorite?: boolean;
 }
 
 export interface Usuario {

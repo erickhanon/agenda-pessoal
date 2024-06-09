@@ -44,7 +44,11 @@
     </v-row>
     <v-row>
       <v-col cols="12">
-        <ContactTable :contacts="contacts" @edit="openEditDialog" @delete="" />
+        <ContactTable
+          :contacts="contacts"
+          @edit="openEditDialog"
+          @favoriteUpdated="handleFavoriteUpdated"
+        />
       </v-col>
     </v-row>
   </v-container>
@@ -52,7 +56,6 @@
     v-model="dialog"
     :contact="currentContact"
     @edit="openEditDialog(currentContact)"
-    @delete="deleteContact(currentContact.id)"
     @save:contact="saveContact(currentContact)"
   />
   <NewContactDialog
@@ -104,7 +107,6 @@ const showSnackbar = (message: string, type: "success" | "error" = "success") =>
 
 const openEditDialog = (contact: ContatoComImagem) => {
   currentContact.value = contact;
-  console.log("currentContact", currentContact.value.email);
   dialog.value = true;
 };
 
@@ -210,26 +212,11 @@ const searchContact = async () => {
   showSnackbar("Pesquisa realizada com sucesso");
 };
 
-const deleteContact = async (id: number | undefined) => {
-  if (!token.value || !userId.value) {
-    fetchContacts();
-    return;
-  }
-
-  const response = await fetch(`${apiUrl}/api/contato/remover/${id}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token.value}`,
-    },
-  });
-
-  if (!response.ok) {
-    showSnackbar("Erro ao deletar contato", "error");
-    throw new Error("Erro ao deletar contato");
-  }
-
-  dialog.value = false;
-  showSnackbar("Contato deletado com sucesso");
+const handleFavoriteUpdated = (isFavorite: boolean) => {
+  showSnackbar(
+    `Contato ${isFavorite ? "favoritado" : "desfavoritado"} com sucesso`,
+    "success"
+  );
   fetchContacts();
 };
 

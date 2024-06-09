@@ -7,6 +7,7 @@
           <v-row>
             <v-col cols="12" sm="6">
               <v-text-field
+                variant="outlined"
                 v-model="user.nome"
                 label="Nome"
                 :rules="[rules.required]"
@@ -15,6 +16,7 @@
             </v-col>
             <v-col cols="12" sm="6">
               <v-text-field
+                variant="outlined"
                 v-model="user.email"
                 label="Email"
                 :rules="[rules.required, rules.email]"
@@ -23,6 +25,7 @@
             </v-col>
             <v-col cols="12" sm="6">
               <v-text-field
+                variant="outlined"
                 v-model="user.cpf"
                 label="CPF"
                 v-mask="'###.###.###-##'"
@@ -32,6 +35,7 @@
             </v-col>
             <v-col cols="12" sm="6">
               <v-text-field
+                variant="outlined"
                 v-model="user.dataNascimento"
                 label="Data Nascimento"
                 type="date"
@@ -41,6 +45,7 @@
             </v-col>
             <v-col cols="12" sm="6">
               <v-text-field
+                variant="outlined"
                 v-model="user.telefone"
                 label="Telefone"
                 v-mask="'(##) #####-####'"
@@ -50,6 +55,7 @@
             </v-col>
             <v-col cols="12" sm="6">
               <v-text-field
+                variant="outlined"
                 v-model="user.username"
                 label="Username"
                 :rules="[rules.required]"
@@ -58,6 +64,7 @@
             </v-col>
             <v-col cols="12" sm="6">
               <v-text-field
+                variant="outlined"
                 v-model="user.password"
                 label="Senha"
                 type="password"

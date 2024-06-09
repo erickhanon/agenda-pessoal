@@ -21,6 +21,16 @@
           ></v-img>
         </v-avatar>
       </template>
+      <template #item.privado="{ item }">
+        <v-tooltip bottom>
+          <template #activator="{ props }">
+            <v-icon v-bind="props">{{
+              item.privado ? "mdi-account-lock" : "mdi-lock-open-variant"
+            }}</v-icon>
+          </template>
+          <span>{{ item.privado ? "Privado" : "Público" }}</span>
+        </v-tooltip>
+      </template>
       <template #item.actions="{ item }">
         <v-btn
           icon
@@ -39,6 +49,15 @@
           @click="openDeleteDialog(item)"
         >
           <v-icon>mdi-delete</v-icon>
+        </v-btn>
+        <v-btn
+          variant="flat"
+          icon
+          size="small"
+          class="mx-1"
+          @click="toggleFavorite(item)"
+        >
+          <v-icon>{{ item.isFavorite ? "mdi-star" : "mdi-star-outline" }}</v-icon>
         </v-btn>
         <EditContactDialog
           @save="saveContact"
@@ -72,20 +91,21 @@
 import type { Contato, ContatoComImagem, Pessoa, Usuario } from "@/assets/types/user";
 import { usePhotoService } from "@/composables/usePhotoService";
 
-const emit = defineEmits(["edit", "delete"]);
-const loading = ref<boolean>(true);
-const apiUrl = "https://demometaway.vps-kinghost.net:8485";
-
-const { loadAuthInfo, token } = useAuth();
-
-if (typeof window !== "undefined") {
-  loadAuthInfo();
-}
 const props = defineProps<{
   contacts: ContatoComImagem[];
 }>();
 
+const emit = defineEmits(["edit", "delete", "favoriteUpdated"]);
+const loading = ref<boolean>(true);
+const apiUrl = "https://demometaway.vps-kinghost.net:8485";
+
+const { loadAuthInfo, token } = useAuth();
+const { getPhoto } = usePhotoService(token.value);
+
 const dialog2 = ref<boolean>(false);
+const contactImageUrl = ref<string | null>(null);
+const dialogDelete = ref<boolean>(false);
+const isMobile = ref(false);
 const currentContact = ref<ContatoComImagem>({
   pessoa: {} as Pessoa,
   tag: "",
@@ -96,9 +116,6 @@ const currentContact = ref<ContatoComImagem>({
   usuario: {} as Usuario,
   contactImageUrl: "",
 });
-
-const contactImageUrl = ref<string | null>(null);
-const dialogDelete = ref<boolean>(false);
 const headers = [
   { title: "Foto", value: "contactImageUrl" },
   { title: "Nome", value: "pessoa.nome" },
@@ -109,8 +126,6 @@ const headers = [
   { title: "Privado", value: "privado" },
   { title: "Ações", value: "actions", sortable: false },
 ];
-
-const { getPhoto } = usePhotoService(token.value);
 
 const fetchContactImages = async () => {
   for (const contact of props.contacts) {
@@ -148,7 +163,33 @@ const saveContact = async (contact: Contato) => {
   const emit = defineEmits(["save:contact"]);
   emit("save:contact", contact);
 };
-const isMobile = ref(false);
+
+const toggleFavorite = async (item: ContatoComImagem) => {
+  const isFavorite = !item.isFavorite;
+  item.isFavorite = isFavorite;
+
+  const url = isFavorite
+    ? `${apiUrl}/api/favorito/salvar`
+    : `${apiUrl}/api/favorito/remover/${item.id}`;
+  const method = isFavorite ? "POST" : "DELETE";
+
+  const response = await fetch(url, {
+    method: method,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token.value}`,
+    },
+    body: isFavorite ? JSON.stringify({ id: item.id }) : null,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error("Erro ao favoritar contato:", errorData);
+    throw new Error("Erro ao favoritar contato");
+  }
+
+  emit("favoriteUpdated", isFavorite);
+};
 
 const updateIsMobile = () => {
   isMobile.value = window.innerWidth < 600;
@@ -165,4 +206,8 @@ watchEffect(() => {
     updateIsMobile();
   }
 });
+
+if (typeof window !== "undefined") {
+  loadAuthInfo();
+}
 </script>
